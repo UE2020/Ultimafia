@@ -249,7 +249,7 @@ module.exports = class MafiaGame extends Game {
   }
 
   recordMissionFails(numFails) {
-    if (numFails === -1) {
+    if (!this.currentMissionHistory || numFails === -1) {
       this.currentMissionHistory = {
         mission: this.mission,
         team: [],
@@ -260,8 +260,12 @@ module.exports = class MafiaGame extends Game {
     const winningTeam =
       this.currentMissionHistory.numFails === 0 ? "rebels" : "spies";
 
-    this.missionRecord.missionHistory.push(this.currentMissionHistory);
-    this.missionRecord.score[winningTeam] += 1;
+    if (this.missionRecord) {
+      this.missionRecord.missionHistory.push(this.currentMissionHistory);
+      if (this.missionRecord.score && this.missionRecord.score[winningTeam] !== undefined) {
+        this.missionRecord.score[winningTeam] += 1;
+      }
+    }
     this.currentMissionHistory = null;
     this.checkGameEnd();
   }
