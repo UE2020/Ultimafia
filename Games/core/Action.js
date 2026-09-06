@@ -42,6 +42,7 @@ module.exports = class Action {
    */
   dominates(player, emitEvent = true) {
     player = player || this.target;
+    if (!player) return false;
     // will be true if immune to any label
     let immune = false;
 
