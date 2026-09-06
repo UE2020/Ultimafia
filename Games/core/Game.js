@@ -715,7 +715,7 @@ module.exports = class Game {
         this.makeUnranked();
         this.makeUncompetitive();
 
-        if (this.breakIntegrity()) {
+        if (!this.isTest && this.breakIntegrity()) {
           await this.refundHeartsForIntegrityBreak(
             player,
             wasRanked,
@@ -775,7 +775,7 @@ module.exports = class Game {
     player.kill("veg", player);
     this.exorcisePlayer(player);
 
-    if (this.breakIntegrity()) {
+    if (!this.isTest && this.breakIntegrity()) {
       await this.refundHeartsForIntegrityBreak(player, wasRanked, wasCompetitive);
       if (!player.isBot) {
         const userId = player.userId || player.user.id;
@@ -803,6 +803,7 @@ module.exports = class Game {
 
   // Returns if the integrity of the game was broken for the first time or not
   breakIntegrity() {
+    if (this.isTest) return false;
     const hadIntegrity = this.hasIntegrity;
     this.hasIntegrity = false;
 
@@ -814,6 +815,7 @@ module.exports = class Game {
   }
 
   async refundHeartsForIntegrityBreak(excludedPlayer, wasRanked, wasCompetitive) {
+    if (this.isTest) return;
     if (!this.heartsChargedAtStart) return;
     if (this.heartsRefundedOnIntegrityBreak) return;
     if (!wasRanked && !wasCompetitive) return;
@@ -3380,6 +3382,7 @@ module.exports = class Game {
   }
 
   async penalizePlayerForLeaving(userId) {
+    if (this.isTest) return;
     let leavePenalty = await models.LeavePenalty.findOne({
       userId: userId,
     }).select("level");
