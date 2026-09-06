@@ -715,7 +715,7 @@ module.exports = class Game {
         this.makeUnranked();
         this.makeUncompetitive();
 
-        if (!this.isTest && this.breakIntegrity()) {
+        if (this.breakIntegrity()) {
           await this.refundHeartsForIntegrityBreak(
             player,
             wasRanked,
@@ -775,7 +775,7 @@ module.exports = class Game {
     player.kill("veg", player);
     this.exorcisePlayer(player);
 
-    if (!this.isTest && this.breakIntegrity()) {
+    if (this.breakIntegrity()) {
       await this.refundHeartsForIntegrityBreak(player, wasRanked, wasCompetitive);
       if (!player.isBot) {
         const userId = player.userId || player.user.id;
@@ -803,7 +803,6 @@ module.exports = class Game {
 
   // Returns if the integrity of the game was broken for the first time or not
   breakIntegrity() {
-    if (this.isTest) return false;
     const hadIntegrity = this.hasIntegrity;
     this.hasIntegrity = false;
 

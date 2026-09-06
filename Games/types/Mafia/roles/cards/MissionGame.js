@@ -27,6 +27,7 @@ module.exports = class MissionGame extends Card {
         this.game.currentMissionFails = 0;
         this.game.teamFails = 0;
         this.game.currentTeamFail = false;
+        this.game.teamApproved = false;
         this.game.teamFailLimit = Number(setup.teamFailLimit) || 5;
         this.game.currentMissionHistory = null;
         this.game.missionRecord = {

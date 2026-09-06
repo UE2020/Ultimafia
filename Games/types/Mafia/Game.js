@@ -249,32 +249,46 @@ module.exports = class MafiaGame extends Game {
   }
 
   recordMissionFails(numFails) {
-    if (!this.currentMissionHistory || numFails === -1) {
+    if (numFails === -1) {
       this.currentMissionHistory = {
         mission: this.mission,
         team: [],
       };
+    } else if (!this.currentMissionHistory?.team?.length) {
+      // No mission took place. Team-selection failures are recorded with -1
+      // only after the retry limit is reached.
+      return false;
     }
 
     this.currentMissionHistory.numFails = numFails;
     const winningTeam =
       this.currentMissionHistory.numFails === 0 ? "rebels" : "spies";
 
-    if (this.missionRecord) {
-      this.missionRecord.missionHistory.push(this.currentMissionHistory);
-      if (this.missionRecord.score && this.missionRecord.score[winningTeam] !== undefined) {
-        this.missionRecord.score[winningTeam] += 1;
-      }
-    }
+    this.missionRecord.missionHistory.push(this.currentMissionHistory);
+    this.missionRecord.score[winningTeam] += 1;
     this.currentMissionHistory = null;
     this.checkGameEnd();
+    return true;
   }
 
   incrementState(index, skipped) {
     if (this.ResistanceMode) {
       let previousState = this.getStateInfo().name;
 
-      if (previousState.match(/Mission/)) {
+      if (previousState.match(/Team Approval/)) {
+        if (!this.currentMissionHistory?.team?.length || !this.teamApproved) {
+          if (!this.currentTeamFail) {
+            this.teamFails++;
+            this.queueAlert("No team was approved; choosing a new leader.");
+          }
+          this.currentTeamFail = true;
+        }
+        // Core selects the next state before resolving votes. Re-evaluate
+        // Mission's skip check now that the approval result is available.
+        [index, skipped] = this.getNextStateIndex();
+      }
+
+      if (previousState.match(/Mission/) && this.currentMissionHistory?.team?.length) {
         if (this.currentMissionFails > 0) {
           this.missionFails++;
           var plural = this.currentMissionFails > 1;
@@ -306,12 +320,15 @@ module.exports = class MafiaGame extends Game {
         this.currentMissionFails = 0;
         this.teamFails = 0;
       }
+      if (this.finished) return;
     }
 
     super.incrementState(index, skipped);
 
     if (this.ResistanceMode && this.getStateInfo().name.match(/Night/)) {
       this.currentTeamFail = false;
+      this.teamApproved = false;
+      this.currentMissionHistory = null;
 
       for (let player of this.players) {
         for (let item of player.items) {
