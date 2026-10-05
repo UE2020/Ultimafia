@@ -28,6 +28,7 @@ import {
 } from "firebase/auth";
 import axios from "axios";
 import { verifyRecaptcha } from "../utils";
+import { collectFingerprint } from "../utils/fingerprint";
 import { useSnackbar } from "../hooks/useSnackbar";
 import { SiteInfoContext } from "../Contexts";
 import { Link } from "react-router-dom";
@@ -146,9 +147,10 @@ export const Auth = ({ defaultTab = 0, open, onClose, asDialog = false }) => {
       const auth = getAuth();
       const userCred = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await userCred.user.getIdToken(true);
+      const fingerprint = await collectFingerprint();
 
       try {
-        await axios.post("/api/auth", { idToken });
+        await axios.post("/api/auth", { idToken, fingerprint });
         if (asDialog && onClose) {
           onClose();
         }
@@ -168,6 +170,11 @@ export const Auth = ({ defaultTab = 0, open, onClose, asDialog = false }) => {
             }
             if (data.deleted) {
               snackbarHook.popUserDeleted();
+              setLoading(false);
+              return;
+            }
+            if (data.banEvasion) {
+              snackbarHook.popBanEvasion();
               setLoading(false);
               return;
             }
@@ -220,9 +227,10 @@ export const Auth = ({ defaultTab = 0, open, onClose, asDialog = false }) => {
       }
       const userCred = await signInWithPopup(getAuth(), googleProvider);
       const idToken = await userCred.user.getIdToken(true);
+      const fingerprint = await collectFingerprint();
 
       try {
-        await axios.post("/api/auth", { idToken });
+        await axios.post("/api/auth", { idToken, fingerprint });
         if (asDialog && onClose) {
           onClose();
         }
@@ -242,6 +250,11 @@ export const Auth = ({ defaultTab = 0, open, onClose, asDialog = false }) => {
             }
             if (data.deleted) {
               snackbarHook.popUserDeleted();
+              setLoading(false);
+              return;
+            }
+            if (data.banEvasion) {
+              snackbarHook.popBanEvasion();
               setLoading(false);
               return;
             }
